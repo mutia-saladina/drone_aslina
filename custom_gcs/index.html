@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom GCS Mutia</title>
-    <!-- Library Socket.io -->
+    <title>Custom GCS </title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; }
@@ -12,6 +11,13 @@
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         span { font-weight: bold; color: #007bff; }
         h1 { color: #333; }
+
+        /* Tambahan Style Tombol */
+        .controls { margin-top: 15px; display: flex; gap: 10px; }
+        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #btn-arm { background-color: #28a745; color: white; }
+        #btn-disarm { background-color: #dc3545; color: white; }
+        button:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -19,19 +25,25 @@
 
     <div class="dashboard">
         <div class="card">
+            <h3>Attitude</h3>
             <p>Roll: <span id="roll">0</span>°</p>
             <p>Pitch: <span id="pitch">0</span>°</p>
             <p>Yaw: <span id="yaw">0</span>°</p>
         </div>
         <div class="card">
+            <h3>Position</h3>
             <p>Lat: <span id="lat">0</span></p>
             <p>Lng: <span id="lng">0</span></p>
             <p>Alt: <span id="alt">0</span> m</p>
         </div>
     </div>
 
+    <div class="controls">
+        <button id="btn-arm">ARMING</button>
+        <button id="btn-disarm">DISARMING</button>
+    </div>
+
     <script>
-        // Hubungkan ke server Flask (pastikan port 5000 sesuai)
         const socket = io('http://localhost:5000');
 
         socket.on('connect', () => {
@@ -39,14 +51,13 @@
         });
 
         socket.on('telemetry_data', (data) => {
-            // Update data Attitude (mengonversi radian ke derajat jika perlu)
-            // Python pymavlink biasanya mengirim dalam satuan radian.
-            // Jika ingin derajat, kalikan data.roll * (180/Math.PI)
-            document.getElementById('roll').innerText = (data.roll * (180/Math.PI)).toFixed(2);
-            document.getElementById('pitch').innerText = (data.pitch * (180/Math.PI)).toFixed(2);
-            document.getElementById('yaw').innerText = (data.yaw * (180/Math.PI)).toFixed(2);
+            // Konversi Radian ke Derajat
+            const toDeg = 180 / Math.PI;
 
-            // Update data Posisi
+            document.getElementById('roll').innerText = (data.roll * toDeg).toFixed(2);
+            document.getElementById('pitch').innerText = (data.pitch * toDeg).toFixed(2);
+            document.getElementById('yaw').innerText = (data.yaw * toDeg).toFixed(2);
+
             document.getElementById('lat').innerText = data.lat.toFixed(7);
             document.getElementById('lng').innerText = data.lng.toFixed(7);
             document.getElementById('alt').innerText = data.alt.toFixed(2);
@@ -55,6 +66,17 @@
         socket.on('disconnect', () => {
             console.log('Terputus dari server.');
         });
+
+        // Event Listener Tombol
+        document.getElementById('btn-arm').onclick = () => {
+            console.log("Sinyal ARM dikirim...");
+            socket.emit('arm_request');
+        };
+
+        document.getElementById('btn-disarm').onclick = () => {
+            console.log("Sinyal DISARM dikirim...");
+            socket.emit('disarm_request');
+        };
     </script>
 </body>
 </html>
